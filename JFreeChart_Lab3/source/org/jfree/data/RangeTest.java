@@ -372,14 +372,14 @@ public class RangeTest extends TestCase {
 	public void testExpandToIncludeBelowRange() {
 		Range r1 = new Range(-100, 100);
 		Range r2 = new Range(-200, 100);
-		assertEquals("The expected range is expanded to -200", r2, Range.expandToInclude(r1, -200));
+		assertEquals("The expected range is expanded to a lower boundary of -200", r2, Range.expandToInclude(r1, -200));
 	}
 	
 	@Test
 	public void testExpandToIncludeAboveRange() {
 		Range r1 = new Range(-100, 100);
 		Range r2 = new Range(-100, 200);
-		assertEquals("The expected range is expanded to 200", r2, Range.expandToInclude(r1, 200));
+		assertEquals("The expected range is expanded to an upper boundary of 200", r2, Range.expandToInclude(r1, 200));
 	}
 	
 	@Test
