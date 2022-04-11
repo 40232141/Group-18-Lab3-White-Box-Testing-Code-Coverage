@@ -4,6 +4,8 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.security.InvalidParameterException;
+
 import org.jfree.data.Range;
 import junit.framework.TestCase;
 
@@ -27,6 +29,67 @@ public class RangeTest extends TestCase {
 	public void testCentralValueShouldBeZero() {
 		assertEquals("The central value of -1 and 1 should be 0", 
 				0, rangeObjectUnderTest.getCentralValue(), 0.00000001d);
+	}
+	
+	//Intersects tests
+	@Test
+	public void testIntersectsWithValueExactlyTheRange() {
+		assertTrue("These values are exactly the range and should be intersecting", 
+				rangeObjectForContainsAndConstrainTest.intersects(-10, 10));
+	}
+	
+	@Test
+	public void testIntersectsWithValueLowerAndMiddleOfTheRange() {
+		assertTrue("These values are the lower boundary and middle of the range and should be intersecting", 
+				rangeObjectForContainsAndConstrainTest.intersects(-10, 0));
+	}
+	
+	@Test
+	public void testIntersectsWithValueMiddleAndUpperOfTheRange() {
+		assertTrue("These values are the middle and the upper boundary of the range and should be intersecting", 
+				rangeObjectForContainsAndConstrainTest.intersects(0, 10));
+	}
+	
+	@Test
+	public void testIntersectsWithValueBelowAndBelowOfTheRange() {
+		assertFalse("These values are both below the range and should not be intersecting", 
+				rangeObjectForContainsAndConstrainTest.intersects(-20, -15));
+	}
+	
+	@Test
+	public void testIntersectsWithValueAboveAndAboveOfTheRange() {
+		assertFalse("These values are both above the range and should not be intersecting", 
+				rangeObjectForContainsAndConstrainTest.intersects(15, 20));
+	}
+	
+	@Test
+	public void testIntersectsWithValueBelowAndMiddleOfTheRange() {
+		assertTrue("These values are below and in the middle of the range and should be intersecting", 
+				rangeObjectForContainsAndConstrainTest.intersects(-20, 0));
+	}
+	
+	@Test
+	public void testIntersectsWithValueMiddleAndAboveOfTheRange() {
+		assertTrue("These values are below and in the middle of the range and should be intersecting", 
+				rangeObjectForContainsAndConstrainTest.intersects(0, 20));
+	}
+	
+	@Test
+	public void testIntersectsWithValueBelowAndAboveOfTheRange() {
+		assertTrue("These values are below and above the range and should be intersecting", 
+				rangeObjectForContainsAndConstrainTest.intersects(-20, 20));
+	}
+	
+	@Test
+	public void testIntersectsWithValuesBothMiddleOfTheRange() {
+		assertTrue("These values are in the middle of the range and should be intersecting", 
+				rangeObjectForContainsAndConstrainTest.intersects(0, 0));
+	}
+	
+	@Test
+	public void testIntersectsWithUpperHigherThanLower() {
+		assertFalse("These values are asking about an invalid range and should not be intersecting", 
+				rangeObjectForContainsAndConstrainTest.intersects(10, 0));
 	}
 	
 	//Contains tests
@@ -97,7 +160,237 @@ public class RangeTest extends TestCase {
 		Range r1 = new Range(100, 100);
 		assertEquals("The expected upper bound is 100", 100.0, r1.getUpperBound());
 	}
-		
+	
+	//shift tests
+	@Test
+	public void testShiftNullRange() {
+
+		try {
+
+			Range r1 = null;
+			Range.shift(r1, 5, false);
+			fail("InvalidParameterException should be thrown as we cannot multiply non existent boundaries");
+
+		} catch (Exception e) {
+
+			assertTrue("Incorrect exception type thrown", e.getClass().equals(NullPointerException.class));
+		}
+	}
+	
+	@Test
+	public void testShiftByPositiveDeltaAndTrue() {
+		Range r1 = new Range(-100, 100);
+		Range r2 = new Range(0, 200);
+		assertEquals("Should shift by 100", r2, Range.shift(r1, 100, true));
+	}
+	
+	@Test
+	public void testShiftByNegativeDeltaAndTrue() {
+		Range r1 = new Range(-100, 100);
+		Range r2 = new Range(-200, 0);
+		assertEquals("Should shift by 100", r2, Range.shift(r1, -100, true));
+	}
+	
+	@Test
+	public void testShiftByPositiveDeltaOverLowerThresholdAndTrue() {
+		Range r1 = new Range(-100, 100);
+		Range r2 = new Range(50, 250);
+		assertEquals("Should shift by 150", r2, Range.shift(r1, 150, true));
+	}
+	
+	@Test
+	public void testShiftByPositiveDeltaOverLowerThresholdAndFalse() {
+		Range r1 = new Range(-100, 100);
+		Range r2 = new Range(0, 250);
+		assertEquals("Should shift by 150 for upper and up to 0 for lower", r2, Range.shift(r1, 150, false));
+	}
+	
+	public void testShiftByPositiveDeltaAndFalse() {
+		Range r1 = new Range(-100, 100);
+		Range r2 = new Range(0, 200);
+		assertEquals("Should shift by 100", r2, Range.shift(r1, 100, false));
+	}
+	
+	public void testShiftByNegativeDeltaAndFalse() {
+		Range r1 = new Range(-100, 100);
+		Range r2 = new Range(-200, 0);
+		assertEquals("Should shift by 100", r2, Range.shift(r1, -100, false));
+	}
+	
+	@Test
+	public void testShiftByNegativeDeltaOverUpperThresholdAndTrue() {
+		Range r1 = new Range(-100, 100);
+		Range r2 = new Range(-250, -50);
+		assertEquals("Should shift by 150", r2, Range.shift(r1, -150, true));
+	}
+	
+	@Test
+	public void testShiftByNegativeDeltaOverUpperThresholdAndFalse() {
+		Range r1 = new Range(-100, 100);
+		Range r2 = new Range(-250, 0);
+		assertEquals("Should shift by 150 for lower and up to 0 for upper", r2, Range.shift(r1, -150, false));
+	}
+	
+	@Test
+	public void testShiftBy0DeltaAndFalse() {
+		Range r1 = new Range(-100, 100);
+		Range r2 = new Range(-100, 100);
+		assertEquals("Should not shift", r2, Range.shift(r1, 0, false));
+	}
+	
+	@Test
+	public void testShiftBy0DeltaAndTrue() {
+		Range r1 = new Range(-100, 100);
+		Range r2 = new Range(-100, 100);
+		assertEquals("Should not shift", r2, Range.shift(r1, 0, true));
+	}
+	
+	
+	@Test
+	public void testShiftBy0DeltaAndFalseFor0Range() {
+		Range r1 = new Range(0, 0);
+		Range r2 = new Range(100, 100);
+		assertEquals("Should shift by 100", r2, Range.shift(r1, 100, false));
+	}
+	
+	@Test
+	public void testShiftBy0DeltaAndTrueFor0Range() {
+		Range r1 = new Range(0, 0);
+		Range r2 = new Range(100, 100);
+		assertEquals("Should shift by 100", r2, Range.shift(r1, 100, true));
+	}
+	
+	@Test
+	public void testShiftBy0DeltaAndNoThirdParamForRange0() {
+		Range r1 = new Range(0, 0);
+		Range r2 = new Range(100, 100);
+		assertEquals("Should shift by 100", r2, Range.shift(r1, 100));
+	}
+	
+	//expand tests
+	@Test
+	public void testExpandNullRange() {
+
+		try {
+
+			Range r1 = null;
+			Range.expand(r1, 0.25, 0.25);
+			fail("IllegalArgumentException should be thrown as we cannot multiply non existent boundaries");
+
+		} catch (Exception e) {
+
+			assertTrue("Incorrect exception type thrown", e.getClass().equals(IllegalArgumentException.class));
+		}
+	}
+	
+	@Test
+	public void testExpandBy0LowerAnd0Upper() {
+		Range r1 = new Range(-100, 100);
+		Range r2 = new Range(-100, 100);
+		assertEquals("0% of a number is just 0", r2, Range.expand(r1, 0, 0));
+	}
+	
+	@Test
+	public void testExpandBy0LowerAndPositiveUpper() {
+		Range r1 = new Range(-100, 100);
+		Range r2 = new Range(-100, 300);
+		assertEquals("0% of a number is just 0 and 100 + 200 = 300", r2, Range.expand(r1, 0, 1));
+	}
+	
+	@Test
+	public void testExpandByPositiveLowerAnd0Upper() {
+		Range r1 = new Range(-100, 100);
+		Range r2 = new Range(-300, 100);
+		assertEquals("0% of a number is just 0 and -100 + -200 = -300", r2, Range.expand(r1, 1, 0));
+	}
+	
+	@Test
+	public void testExpandByPositiveLowerAndPositiveUpper() {
+		Range r1 = new Range(-100, 100);
+		Range r2 = new Range(-300, 300);
+		assertEquals("100 + 200 = 300 and -100 + -200 = -300", r2, Range.expand(r1, 1, 1));
+	}
+	
+	@Test
+	public void testExpandByNegativeLowerAndNegativeUpperTooBig() {
+		try {
+			Range r1 = new Range(-100, 100);
+			Range.expand(r1, -0.25, -1);
+			fail("We are multiplying by negatives so this would make lower higher than upper");
+
+		} catch (Exception e) {
+
+			assertTrue("Incorrect exception type thrown", e.getClass().equals(IllegalArgumentException.class));
+		}
+	}
+	
+	@Test
+	public void testExpandByNegativeLowerAndNegativeUpper() {
+		Range r1 = new Range(-100, 100);
+		Range r2 = new Range(-50, 50);
+		assertEquals("both should decrease by 25%", r2, Range.expand(r1, -0.25, -0.25));
+	}
+	
+	@Test
+	public void testExpandByNegativeLowerAndPositiveUpper() {
+		Range r1 = new Range(-100, 100);
+		Range r2 = new Range(-50, 300);
+		assertEquals("lower should decrease by 25% and upper increase by 100%", r2, Range.expand(r1, -0.25, 1));
+	}
+	
+	@Test
+	public void testExpandByPositiveLowerAndNegativeUpper() {
+		Range r1 = new Range(-100, 100);
+		Range r2 = new Range(-300, 50);
+		assertEquals("lower should increase by 100% and upper decrease by 25%", r2, Range.expand(r1, 1, -0.25));
+	}
+	
+	
+	//expandToInclude tests
+	@Test
+	public void testExpandToIncludeNullRange() {
+		Range r1 = null;
+		Range r2 = new Range(-100, -100);
+		assertEquals("The expected range is just the value", r2, Range.expandToInclude(r1, -100));
+	}
+	
+	@Test
+	public void testExpandToIncludeUpperBoundary() {
+		Range r1 = new Range(-100, 100);
+		Range r2 = new Range(-100, 100);
+		assertEquals("The expected range is the same", r2, Range.expandToInclude(r1, 100));
+	}
+	
+	@Test
+	public void testExpandToIncludeLowerBoundary() {
+		Range r1 = new Range(-100, 100);
+		Range r2 = new Range(-100, 100);
+		assertEquals("The expected range is the same", r2, Range.expandToInclude(r1, -100));
+	}
+	
+	@Test
+	public void testExpandToIncludeBelowRange() {
+		Range r1 = new Range(-100, 100);
+		Range r2 = new Range(-200, 100);
+		assertEquals("The expected range is expanded to -200", r2, Range.expandToInclude(r1, -200));
+	}
+	
+	@Test
+	public void testExpandToIncludeAboveRange() {
+		Range r1 = new Range(-100, 100);
+		Range r2 = new Range(-100, 200);
+		assertEquals("The expected range is expanded to 200", r2, Range.expandToInclude(r1, 200));
+	}
+	
+	@Test
+	public void testExpandToIncludeMiddleOfRange() {
+		Range r1 = new Range(-100, 100);
+		Range r2 = new Range(-100, 100);
+		assertEquals("The expected range is the same", r2, Range.expandToInclude(r1, 0));
+	}
+	
+	
+	
 	//getCentralValue tests
 	@Test
 	public void testGetCentralValueWhereBothUpperAndLowerBoundariesAreNegative() {
